@@ -6,6 +6,7 @@ import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
 import { ConfiguratorPage } from './pages/ConfiguratorPage'
 import { CartPage } from './pages/CartPage'
+import { CheckoutPage } from './pages/CheckoutPage'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="configurator" element={<ConfiguratorPage />} />
         <Route path="cart" element={<CartPage />} />
+        <Route path="checkout" element={<CheckoutPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
