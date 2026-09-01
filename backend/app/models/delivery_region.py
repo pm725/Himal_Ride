@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Boolean
+from sqlalchemy import Column, String, Float, Boolean, Integer  # Add Integer here
 from .base import BaseModel
 
 
@@ -8,7 +8,7 @@ class DeliveryRegion(BaseModel):
     name = Column(String(100), unique=True, nullable=False, index=True)
     region_type = Column(String(50))  # metro, city, district
     base_fee = Column(Float, nullable=False)
-    estimated_days = Column(Integer, nullable=False)
+    estimated_days = Column(Integer, nullable=False)  # Now Integer is defined
     is_active = Column(Boolean, default=True)
     districts = Column(String(500))  # Comma-separated list of districts
     
