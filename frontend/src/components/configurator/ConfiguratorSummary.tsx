@@ -1,4 +1,5 @@
 import { Component, ValidationResult } from '../../stores/configuratorStore'
+import { useCartStore } from '../../stores/cartStore'
 import { Card } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -33,6 +34,22 @@ export function ConfiguratorSummary({
   isComplete,
   onContinue,
 }: ConfiguratorSummaryProps) {
+  const addToCart = useCartStore((state) => state.addItem)
+
+  const handleAddToCart = () => {
+    // Build a configuration object to store in cart
+    const configuration = {
+      components,
+      totalPrice,
+      totalWeight,
+      validationResult,
+    }
+
+    addToCart(configuration, components)
+    // Optionally show toast or navigate
+    onContinue()
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -136,7 +153,7 @@ export function ConfiguratorSummary({
 
       <div className="flex justify-end">
         <Button
-          onClick={onContinue}
+          onClick={handleAddToCart}
           disabled={!isComplete || !validationResult?.is_valid}
           size="lg"
         >
