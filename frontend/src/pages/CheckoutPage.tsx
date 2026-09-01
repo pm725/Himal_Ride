@@ -9,7 +9,7 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Separator } from '../components/ui/separator'
 import { Badge } from '../components/ui/badge'
-import { AlertCircle, CheckCircle2, Truck, CreditCard, Wallet } from 'lucide-react'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface DeliveryRegion {
   id: string
@@ -157,7 +157,7 @@ export function CheckoutPage() {
             </div>
             <div>
               <p className="text-muted-foreground">Status</p>
-              <Badge variant="success">Paid</Badge>
+              <Badge className="bg-green-500 hover:bg-green-600 text-white">Paid</Badge>
             </div>
           </div>
         </Card>
