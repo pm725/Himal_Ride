@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .endpoints import auth, health, components, configurator, terrain, orders, delivery
+from .endpoints import auth, health, components, configurator, terrain, orders, delivery, users
 
 api_router = APIRouter()
 
@@ -10,3 +10,4 @@ api_router.include_router(configurator.router)
 api_router.include_router(terrain.router)
 api_router.include_router(orders.router)
 api_router.include_router(delivery.router)
+api_router.include_router(users.router)
