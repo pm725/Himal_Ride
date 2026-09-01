@@ -8,7 +8,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy import MetaData
 from .config import settings
 
-# Naming convention for constraints (helps with alembic)
+# Naming convention for constraints
 convention = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -20,13 +20,28 @@ convention = {
 metadata = MetaData(naming_convention=convention)
 Base = declarative_base(metadata=metadata)
 
+# Check if using SQLite
+is_sqlite = settings.DATABASE_URL.startswith("sqlite") or "sqlite" in settings.DATABASE_URL
+
+# Engine configuration
+engine_kwargs = {
+    "echo": settings.DEBUG,
+}
+
+# SQLite specific settings
+if is_sqlite:
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs.update({
+        "pool_size": settings.DB_POOL_SIZE,
+        "max_overflow": settings.DB_MAX_OVERFLOW,
+        "pool_recycle": settings.DB_POOL_RECYCLE,
+    })
+
 # Async engine
 engine: AsyncEngine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    pool_size=settings.DB_POOL_SIZE,
-    max_overflow=settings.DB_MAX_OVERFLOW,
-    pool_recycle=settings.DB_POOL_RECYCLE,
+    **engine_kwargs
 )
 
 # Async session factory

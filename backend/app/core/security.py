@@ -1,22 +1,29 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import HTTPException, status
 from .config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hashed password"""
-    return pwd_context.verify(plain_password, hashed_password)
-
+    try:
+        # Ensure password is encoded to bytes
+        plain_bytes = plain_password.encode('utf-8')
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(plain_bytes, hashed_bytes)
+    except Exception:
+        return False
 
 def get_password_hash(password: str) -> str:
     """Hash a password using bcrypt"""
-    return pwd_context.hash(password)
-
+    # Truncate password to 72 bytes for bcrypt compatibility
+    if len(password) > 72:
+        password = password[:72]
+    # Hash the password
+    salt = bcrypt.gensalt(rounds=12)
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token"""
@@ -30,7 +37,6 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-
 def create_refresh_token(data: Dict[str, Any]) -> str:
     """Create a JWT refresh token"""
     to_encode = data.copy()
@@ -39,7 +45,6 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     )
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-
 
 def decode_token(token: str) -> Dict[str, Any]:
     """Decode and validate a JWT token"""
@@ -52,7 +57,6 @@ def decode_token(token: str) -> Dict[str, Any]:
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
-
 
 def get_token_type(token: str) -> str:
     """Extract token type from JWT payload"""

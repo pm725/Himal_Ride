@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean
+from sqlalchemy import Column, String, Boolean
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 
@@ -10,7 +10,7 @@ class Role(BaseModel):
     description = Column(String(255))
     is_active = Column(Boolean, default=True)
     
-    # Relationships
+    # Relationships - Add this back
     users = relationship("User", back_populates="role")
     
     def __repr__(self):

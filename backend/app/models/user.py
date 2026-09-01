@@ -23,11 +23,8 @@ class User(BaseModel):
     # Foreign Keys
     role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
     
-    # Relationships
+    # Relationships - Add this back
     role = relationship("Role", back_populates="users")
-    
-    # Audit
-    audit_logs = relationship("AuditLog", back_populates="user")
     
     def __repr__(self):
         return f"<User {self.email}>"

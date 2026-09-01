@@ -10,7 +10,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, max_length=100)
+    password: str = Field(..., min_length=8, max_length=72)
     
     @field_validator("password")
     @classmethod
@@ -18,6 +18,8 @@ class UserCreate(UserBase):
         """Validate password strength"""
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters")
+        if len(v) > 72:
+            raise ValueError("Password cannot exceed 72 characters")
         if not any(c.isupper() for c in v):
             raise ValueError("Password must contain at least one uppercase letter")
         if not any(c.islower() for c in v):
@@ -29,7 +31,7 @@ class UserCreate(UserBase):
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., max_length=72)
 
 
 class UserResponse(UserBase):

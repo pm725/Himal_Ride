@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,7 +24,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: development
     container_name: himal-ride-backend
     environment:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/himalride
@@ -35,7 +34,6 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - /app/.venv # Exclude venv from mount
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,7 +45,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
     container_name: himal-ride-frontend
     environment:
       - VITE_API_URL=http://localhost:8000
@@ -58,7 +55,7 @@ services:
       - /app/node_modules
     depends_on:
       - backend
-    command: pnpm dev --host 0.0.0.0
+    command: npm run dev -- --host 0.0.0.0
     networks:
       - himal-ride-network
 
