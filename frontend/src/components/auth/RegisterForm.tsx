@@ -30,8 +30,8 @@ type RegisterFormData = z.infer<typeof registerSchema>
 
 export function RegisterForm() {
   const navigate = useNavigate()
-  const { setUser, setTokens } = useAuthStore()
-  const [isLoading, setIsLoading] = useState(false)
+  const { login, setLoading, isLoading } = useAuthStore()
+  const [error, setError] = useState<string | null>(null)
 
   const {
     register,
@@ -42,10 +42,12 @@ export function RegisterForm() {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true)
+    setLoading(true)
+    setError(null)
+    
     try {
       // Register
-      const response = await apiClient.post('/api/v1/auth/register', {
+      await apiClient.post('/api/v1/auth/register', {
         full_name: data.full_name,
         email: data.email,
         password: data.password,
@@ -66,14 +68,21 @@ export function RegisterForm() {
         headers: { Authorization: `Bearer ${access_token}` },
       })
       
-      setTokens(access_token, refresh_token)
-      setUser(userResponse.data)
+      // Store auth state
+      login(userResponse.data, access_token, refresh_token)
       
-      navigate('/dashboard')
+      // Navigate to dashboard
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true })
+      }, 100)
+      
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Registration failed')
+      console.error('Registration error:', error)
+      const message = error.response?.data?.detail || 'Registration failed. Please try again.'
+      setError(message)
+      toast.error(message)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -84,6 +93,12 @@ export function RegisterForm() {
         <p className="text-muted-foreground">Join HIMAL-RIDE today</p>
       </div>
 
+      {error && (
+        <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md mb-4">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="full_name">Full Name</Label>
@@ -93,7 +108,7 @@ export function RegisterForm() {
             {...register('full_name')}
           />
           {errors.full_name && (
-            <p className="text-sm text-red-500">{errors.full_name.message}</p>
+            <p className="text-sm text-destructive">{errors.full_name.message}</p>
           )}
         </div>
 
@@ -106,7 +121,7 @@ export function RegisterForm() {
             {...register('email')}
           />
           {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
+            <p className="text-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
 
@@ -119,7 +134,7 @@ export function RegisterForm() {
             {...register('password')}
           />
           {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
+            <p className="text-sm text-destructive">{errors.password.message}</p>
           )}
         </div>
 
@@ -132,7 +147,7 @@ export function RegisterForm() {
             {...register('confirmPassword')}
           />
           {errors.confirmPassword && (
-            <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+            <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
           )}
         </div>
 
