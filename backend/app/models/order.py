@@ -13,20 +13,20 @@ class Order(BaseModel):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     
     # Order details
-    status = Column(String(50), default="pending")  # pending, paid, shipped, delivered, cancelled
+    status = Column(String(50), default="pending")
     subtotal = Column(Float, nullable=False)
     delivery_fee = Column(Float, nullable=False)
     total_amount = Column(Float, nullable=False)
-    payment_method = Column(String(50), nullable=False)  # esewa, khalti, fonepay, cod
-    payment_status = Column(String(50), default="pending")  # pending, completed, failed
+    payment_method = Column(String(50), nullable=False)
+    payment_status = Column(String(50), default="pending")
     
     # Delivery details
     delivery_region_id = Column(UUID(as_uuid=True), ForeignKey("delivery_regions.id"))
-    delivery_address = Column(JSON, nullable=False)  # {street, city, district, phone, full_name}
+    delivery_address = Column(JSON, nullable=False)
     estimated_delivery_date = Column(DateTime(timezone=True))
     
     # Configuration snapshot
-    configuration_snapshot = Column(JSON, nullable=False)  # Full configuration at time of order
+    configuration_snapshot = Column(JSON, nullable=False)
     
     # Relationships
     user = relationship("User")
