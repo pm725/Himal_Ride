@@ -6,6 +6,8 @@ from app.models.role import Role
 from sqlalchemy import select
 import uuid
 
+from backend.app.models.delivery_region import DeliveryRegion
+
 # Component data
 COMPONENTS = [
     # Frames
@@ -260,7 +262,52 @@ TERRAIN_PROFILES = [
         "icon": "🏔️",
         "color": "#E74C3C"
     },
+]# Add after TERRAIN_PROFILES
+DELIVERY_REGIONS = [
+    {
+        "name": "Kathmandu Valley",
+        "region_type": "metro",
+        "base_fee": 150,
+        "estimated_days": 1,
+        "districts": "Kathmandu, Lalitpur, Bhaktapur",
+        "is_active": True
+    },
+    {
+        "name": "Pokhara",
+        "region_type": "city",
+        "base_fee": 200,
+        "estimated_days": 2,
+        "districts": "Pokhara, Kaski",
+        "is_active": True
+    },
+    {
+        "name": "Chitwan",
+        "region_type": "city",
+        "base_fee": 250,
+        "estimated_days": 2,
+        "districts": "Bharatpur, Chitwan",
+        "is_active": True
+    },
+    {
+        "name": "Dharan",
+        "region_type": "city",
+        "base_fee": 300,
+        "estimated_days": 3,
+        "districts": "Dharan, Sunsari",
+        "is_active": True
+    },
+    {
+        "name": "Other Districts",
+        "region_type": "district",
+        "base_fee": 400,
+        "estimated_days": 4,
+        "districts": "All other districts",
+        "is_active": True
+    },
 ]
+
+# In seed_data function, add:
+
 
 
 async def seed_data():
@@ -286,6 +333,11 @@ async def seed_data():
         
         await db.commit()
         print("\n✅ Seed data complete!")
+
+        for region_data in DELIVERY_REGIONS:
+            region = DeliveryRegion(**region_data)
+            db.add(region)
+            print(f"✅ Added delivery region: {region.name}")
 
 
 if __name__ == "__main__":
