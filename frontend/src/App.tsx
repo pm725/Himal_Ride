@@ -9,6 +9,8 @@ import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { OrderHistory } from './pages/OrderHistory'
 import { OrderDetail } from './pages/OrderDetail'
+import { SavedBuilds } from './pages/SavedBuilds'
+import { AdminDashboard } from './pages/AdminDashboard'
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
         <Route path="configurator" element={<ConfiguratorPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="saved-builds" element={<SavedBuilds />} />
+        <Route path="admin" element={<AdminDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
