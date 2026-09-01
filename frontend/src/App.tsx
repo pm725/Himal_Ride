@@ -7,6 +7,8 @@ import { Dashboard } from './pages/Dashboard'
 import { ConfiguratorPage } from './pages/ConfiguratorPage'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
+import { OrderHistory } from './pages/OrderHistory'
+import { OrderDetail } from './pages/OrderDetail'
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="orders" element={<OrderHistory />} />
+        <Route path="orders/:id" element={<OrderDetail />} />
         <Route path="configurator" element={<ConfiguratorPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
