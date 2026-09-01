@@ -1,4 +1,4 @@
-import { Component, ValidationResult } from '../../stores/configuratorStore'
+import { Component, ValidationResult, Configuration } from '../../stores/configuratorStore'
 import { useCartStore } from '../../stores/cartStore'
 import { Card } from '../ui/card'
 import { Badge } from '../ui/badge'
@@ -8,6 +8,7 @@ import { Separator } from '../ui/separator'
 import { Bike, Weight, Ruler, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface ConfiguratorSummaryProps {
+  configuration: Configuration  // Add this
   components: Component[]
   totalPrice: number
   totalWeight: number
@@ -27,6 +28,7 @@ const categoryLabels: Record<string, string> = {
 }
 
 export function ConfiguratorSummary({
+  configuration,  // Add this
   components,
   totalPrice,
   totalWeight,
@@ -37,16 +39,13 @@ export function ConfiguratorSummary({
   const addToCart = useCartStore((state) => state.addItem)
 
   const handleAddToCart = () => {
-    // Build a configuration object to store in cart
-    const configuration = {
-      components,
-      totalPrice,
-      totalWeight,
-      validationResult,
-    }
-
-    addToCart(configuration, components)
-    // Optionally show toast or navigate
+    // Get all selected components from the store
+    const selectedComponents = Object.values(configuration)
+      .filter((val): val is Component => 
+        val !== null && typeof val === 'object' && 'id' in val
+      )
+    
+    addToCart(configuration, selectedComponents)
     onContinue()
   }
 
