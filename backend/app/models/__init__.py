@@ -6,8 +6,10 @@ from .component import Component
 from .terrain_profile import TerrainProfile
 from .delivery_region import DeliveryRegion
 from .order import Order
+from .configuration import Configuration
 
 __all__ = [
     "Base", "User", "Role", "AuditLog", 
-    "Component", "TerrainProfile", "DeliveryRegion", "Order"
+    "Component", "TerrainProfile", "DeliveryRegion", 
+    "Order", "Configuration"
 ]
