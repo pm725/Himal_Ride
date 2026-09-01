@@ -21,8 +21,8 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export function LoginForm() {
   const navigate = useNavigate()
-  const { setUser, setTokens } = useAuthStore()
-  const [isLoading, setIsLoading] = useState(false)
+  const { login, setLoading, isLoading } = useAuthStore()
+  const [error, setError] = useState<string | null>(null)
 
   const {
     register,
@@ -33,25 +33,36 @@ export function LoginForm() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true)
+    setLoading(true)
+    setError(null)
+    
     try {
-      const response = await apiClient.post('/api/v1/auth/login', data)
-      const { access_token, refresh_token } = response.data
+      // Login
+      const loginResponse = await apiClient.post('/api/v1/auth/login', data)
+      const { access_token, refresh_token } = loginResponse.data
       
       // Get user profile
       const userResponse = await apiClient.get('/api/v1/users/me', {
         headers: { Authorization: `Bearer ${access_token}` },
       })
       
-      setTokens(access_token, refresh_token)
-      setUser(userResponse.data)
+      // Store auth state
+      login(userResponse.data, access_token, refresh_token)
       
       toast.success('Login successful! 🎉')
-      navigate('/dashboard')
+      
+      // Navigate to dashboard
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true })
+      }, 100)
+      
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Login failed')
+      console.error('Login error:', error)
+      const message = error.response?.data?.detail || 'Login failed. Please try again.'
+      setError(message)
+      toast.error(message)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -61,6 +72,12 @@ export function LoginForm() {
         <h2 className="text-2xl font-bold">Welcome Back</h2>
         <p className="text-muted-foreground">Sign in to your HIMAL-RIDE account</p>
       </div>
+
+      {error && (
+        <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md mb-4">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
@@ -72,7 +89,7 @@ export function LoginForm() {
             {...register('email')}
           />
           {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
+            <p className="text-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
 
@@ -85,7 +102,7 @@ export function LoginForm() {
             {...register('password')}
           />
           {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
+            <p className="text-sm text-destructive">{errors.password.message}</p>
           )}
         </div>
 
