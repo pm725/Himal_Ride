@@ -1,8 +1,10 @@
 import { Outlet, Link } from 'react-router-dom'
+import { useAuthStore } from '../../stores/authStore'
 import { useCartStore } from '../../stores/cartStore'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Heart, User } from 'lucide-react'
 
 export function Layout() {
+  const { user } = useAuthStore()
   const itemCount = useCartStore((state) => state.getItemCount())
   
   return (
@@ -17,6 +19,23 @@ export function Layout() {
               <Link to="/configurator" className="text-sm hover:text-primary">
                 Build
               </Link>
+              {user && (
+                <>
+                  <Link to="/saved-builds" className="text-sm hover:text-primary flex items-center gap-1">
+                    <Heart className="w-4 h-4" />
+                    Saved
+                  </Link>
+                  <Link to="/dashboard" className="text-sm hover:text-primary flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                  {user.role === 'admin' && (
+                    <Link to="/admin" className="text-sm hover:text-primary">
+                      Admin
+                    </Link>
+                  )}
+                </>
+              )}
               <Link to="/cart" className="relative text-sm hover:text-primary">
                 <ShoppingCart className="w-5 h-5" />
                 {itemCount > 0 && (
@@ -25,6 +44,18 @@ export function Layout() {
                   </span>
                 )}
               </Link>
+              {!user ? (
+                <Link to="/login" className="text-sm hover:text-primary">
+                  Login
+                </Link>
+              ) : (
+                <button
+                  onClick={() => useAuthStore.getState().logout()}
+                  className="text-sm hover:text-primary"
+                >
+                  Logout
+                </button>
+              )}
             </nav>
           </div>
         </div>
