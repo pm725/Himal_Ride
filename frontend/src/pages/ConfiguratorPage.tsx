@@ -87,6 +87,7 @@ export function ConfiguratorPage() {
           </div>
         ) : isReviewStep ? (
           <ConfiguratorSummary
+          configuration={configuration}
             components={selectedComponents}
             totalPrice={totalPrice}
             totalWeight={totalWeight}
