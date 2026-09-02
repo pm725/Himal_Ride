@@ -7,55 +7,39 @@ interface StepIndicatorProps {
   isComplete: boolean
 }
 
-export function StepIndicator({ currentStep, totalSteps, steps, isComplete }: StepIndicatorProps) {
+export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
   return (
-    <div className="w-full py-4">
-      <div className="flex items-center justify-between">
-        {steps.map((label, index) => (
-          <div key={index} className="flex flex-col items-center flex-1">
-            <div className="relative flex items-center w-full">
-              {/* Line connecting steps */}
-              {index > 0 && (
-                <div
-                  className={`absolute left-0 w-full h-0.5 -translate-x-1/2 ${
-                    index <= currentStep || isComplete
-                      ? 'bg-primary'
-                      : 'bg-muted'
-                  }`}
-                  style={{ left: '50%', width: 'calc(100% - 0px)' }}
-                />
-              )}
-              
-              {/* Step circle */}
-              <div
-                className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                  index < currentStep || (index === currentStep && isComplete)
-                    ? 'bg-primary border-primary text-primary-foreground'
-                    : index === currentStep
-                    ? 'border-primary text-primary'
-                    : 'border-muted text-muted-foreground'
-                }`}
-              >
-                {index < currentStep || (index === currentStep && isComplete) ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <span className="text-sm font-medium">{index + 1}</span>
-                )}
-              </div>
-            </div>
-            
-            {/* Step label */}
-            <span
-              className={`mt-2 text-xs font-medium ${
-                index <= currentStep || isComplete
-                  ? 'text-foreground'
-                  : 'text-muted-foreground'
+    <div className="mb-8">
+      <div className="flex items-center justify-between overflow-x-auto pb-2">
+        {steps.map((step, index) => (
+          <div key={index} className="flex flex-col items-center gap-1 min-w-[2.5rem]">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
+                index < currentStep
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : index === currentStep
+                  ? 'border-2 border-primary text-primary bg-primary/5'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
-              {label}
+              {index < currentStep ? <Check className="w-3.5 h-3.5" /> : index + 1}
+            </div>
+            <span
+              className={`hidden md:block text-[10px] font-medium text-center whitespace-nowrap ${
+                index === currentStep ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              {step}
             </span>
           </div>
         ))}
+      </div>
+      {/* Track */}
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-3">
+        <div
+          className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+        />
       </div>
     </div>
   )

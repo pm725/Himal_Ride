@@ -1,111 +1,87 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { apiClient } from '../api/client'
 
 export interface User {
   id: string
-  email: string
   full_name: string
+  email: string
   role: string
-  is_active: boolean
-  is_verified: boolean
-  created_at: string
 }
 
 interface AuthState {
   user: User | null
-  accessToken: string | null
+  token: string | null
   refreshToken: string | null
-  isAuthenticated: boolean
   isLoading: boolean
-  
-  // Actions
-  setUser: (user: User) => void
-  setTokens: (accessToken: string, refreshToken: string) => void
-  login: (user: User, accessToken: string, refreshToken: string) => void
+
+  login: (email: string, password: string) => Promise<void>
+  register: (data: { full_name: string; email: string; password: string }) => Promise<void>
   logout: () => void
-  setLoading: (isLoading: boolean) => void
-  hydrate: () => void
+  setToken: (token: string) => void
+  setLoading: (loading: boolean) => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      accessToken: null,
+      token: null,
       refreshToken: null,
-      isAuthenticated: false,
       isLoading: false,
 
-      setUser: (user) => {
-        set({ 
-          user, 
-          isAuthenticated: true 
-        })
+      setToken: (token) => set({ token }),
+      setLoading: (isLoading) => set({ isLoading }),
+
+      login: async (email, password) => {
+        set({ isLoading: true })
+        try {
+          const response = await apiClient.post('/api/v1/auth/login', { email, password })
+          const { access_token, refresh_token } = response.data
+
+          const userRes = await apiClient.get('/api/v1/users/me', {
+            headers: { Authorization: `Bearer ${access_token}` },
+          })
+
+          set({
+            user: userRes.data,
+            token: access_token,
+            refreshToken: refresh_token,
+            isLoading: false,
+          })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
       },
 
-      setTokens: (accessToken, refreshToken) => {
-        set({ 
-          accessToken, 
-          refreshToken,
-          isAuthenticated: true 
-        })
-      },
-
-      login: (user, accessToken, refreshToken) => {
-        set({
-          user,
-          accessToken,
-          refreshToken,
-          isAuthenticated: true,
-          isLoading: false,
-        })
+      register: async (data) => {
+        set({ isLoading: true })
+        try {
+          await apiClient.post('/api/v1/auth/register', {
+            full_name: data.full_name,
+            email: data.email,
+            password: data.password,
+          })
+          // Auto-login after registration
+          await get().login(data.email, data.password)
+          set({ isLoading: false })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
       },
 
       logout: () => {
         set({
           user: null,
-          accessToken: null,
+          token: null,
           refreshToken: null,
-          isAuthenticated: false,
           isLoading: false,
         })
-        // Clear any stored data
-        localStorage.removeItem('himal-ride-auth')
-      },
-
-      setLoading: (isLoading) => {
-        set({ isLoading })
-      },
-
-      hydrate: () => {
-        // Force rehydration from storage
-        const stored = localStorage.getItem('himal-ride-auth')
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored)
-            const state = parsed.state
-            if (state?.accessToken && state?.user) {
-              set({
-                user: state.user,
-                accessToken: state.accessToken,
-                refreshToken: state.refreshToken,
-                isAuthenticated: true,
-              })
-            }
-          } catch (e) {
-            console.error('Failed to hydrate auth state:', e)
-          }
-        }
+        localStorage.removeItem('himal-auth')
       },
     }),
-    {
-      name: 'himal-ride-auth',
-      partialize: (state) => ({
-        user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
-        isAuthenticated: state.isAuthenticated,
-      }),
-    }
+    { name: 'himal-auth' }
   )
 )

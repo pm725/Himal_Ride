@@ -1,6 +1,35 @@
 import { useEffect, useState } from 'react'
 import { useConfiguratorStore } from '../stores/configuratorStore'
 import { componentsApi, Component, ValidationResponse } from '../api/components'
+export interface BikeComponent {
+  id: string
+  name: string
+  price: number
+  weight: number
+  category: string
+  stock: number
+  description: string
+  image_url?: string
+}
+
+export interface Configuration {
+  frame: BikeComponent | null
+  motor: BikeComponent | null
+  battery: BikeComponent | null
+  suspension: BikeComponent | null
+  brakes: BikeComponent | null
+  wheels: BikeComponent | null
+}
+
+export interface ValidationResult {
+  is_valid: boolean
+  compatibility_score: number
+  warnings: string[]
+  errors: string[]
+  total_price?: number
+  total_weight?: number
+  estimated_range?: number
+}
 
 export function useConfigurator() {
   const {
