@@ -1,13 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { Configuration, Component } from './configuratorStore'
 
 export interface CartItem {
   id: string
-  configuration: Configuration
+  configuration: Record<string, unknown>
+  quantity: number
   totalPrice: number
   totalWeight: number
-  quantity: number
 }
 
 interface CartState {
@@ -16,12 +15,19 @@ interface CartState {
   totalPrice: number
   
   // Actions
-  addItem: (configuration: Configuration, components: Component[]) => void
+  addItem: (item: Omit<CartItem, 'id'>) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
-  getItemCount: () => number
-  getTotalPrice: () => number
+  getItemCount: () => number  // ✅ Add this method
+  getTotalPrice: () => number // ✅ Add this method
+}
+
+function computeTotals(items: CartItem[]) {
+  return {
+    totalItems: items.reduce((s, i) => s + i.quantity, 0),
+    totalPrice: items.reduce((s, i) => s + i.totalPrice * i.quantity, 0),
+  }
 }
 
 export const useCartStore = create<CartState>()(
@@ -31,77 +37,31 @@ export const useCartStore = create<CartState>()(
       totalItems: 0,
       totalPrice: 0,
 
-      addItem: (configuration, components) => {
-        const totalPrice = components.reduce((sum, c) => sum + c.base_price, 0)
-        const totalWeight = components.reduce((sum, c) => sum + c.weight_kg, 0)
-        
+      addItem: (item) =>
         set((state) => {
-          const existingItem = state.items.find(
-            (item) => JSON.stringify(item.configuration) === JSON.stringify(configuration)
-          )
-          
-          if (existingItem) {
-            const updatedItems = state.items.map((item) =>
-              item.id === existingItem.id
-                ? { ...item, quantity: item.quantity + 1 }
-                : item
-            )
-            return {
-              items: updatedItems,
-              totalItems: updatedItems.reduce((sum, i) => sum + i.quantity, 0),
-              totalPrice: updatedItems.reduce((sum, i) => sum + i.totalPrice * i.quantity, 0),
-            }
-          }
-          
-          const newItem: CartItem = {
-            id: crypto.randomUUID(),
-            configuration,
-            totalPrice,
-            totalWeight,
-            quantity: 1,
-          }
-          
-          const updatedItems = [...state.items, newItem]
-          return {
-            items: updatedItems,
-            totalItems: updatedItems.reduce((sum, i) => sum + i.quantity, 0),
-            totalPrice: updatedItems.reduce((sum, i) => sum + i.totalPrice * i.quantity, 0),
-          }
-        })
-      },
+          const newItems = [
+            ...state.items,
+            { ...item, id: `cart-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` },
+          ]
+          return { items: newItems, ...computeTotals(newItems) }
+        }),
 
-      removeItem: (id) => {
+      removeItem: (id) =>
         set((state) => {
-          const updatedItems = state.items.filter((item) => item.id !== id)
-          return {
-            items: updatedItems,
-            totalItems: updatedItems.reduce((sum, i) => sum + i.quantity, 0),
-            totalPrice: updatedItems.reduce((sum, i) => sum + i.totalPrice * i.quantity, 0),
-          }
-        })
-      },
+          const newItems = state.items.filter((i) => i.id !== id)
+          return { items: newItems, ...computeTotals(newItems) }
+        }),
 
-      updateQuantity: (id, quantity) => {
-        if (quantity <= 0) {
-          get().removeItem(id)
-          return
-        }
-        
+      updateQuantity: (id, quantity) =>
         set((state) => {
-          const updatedItems = state.items.map((item) =>
-            item.id === id ? { ...item, quantity } : item
-          )
-          return {
-            items: updatedItems,
-            totalItems: updatedItems.reduce((sum, i) => sum + i.quantity, 0),
-            totalPrice: updatedItems.reduce((sum, i) => sum + i.totalPrice * i.quantity, 0),
-          }
-        })
-      },
+          const newItems =
+            quantity <= 0
+              ? state.items.filter((i) => i.id !== id)
+              : state.items.map((i) => (i.id === id ? { ...i, quantity } : i))
+          return { items: newItems, ...computeTotals(newItems) }
+        }),
 
-      clearCart: () => {
-        set({ items: [], totalItems: 0, totalPrice: 0 })
-      },
+      clearCart: () => set({ items: [], totalItems: 0, totalPrice: 0 }),
 
       getItemCount: () => {
         return get().totalItems
@@ -111,8 +71,6 @@ export const useCartStore = create<CartState>()(
         return get().totalPrice
       },
     }),
-    {
-      name: 'himal-ride-cart',
-    }
+    { name: 'himal-cart' }
   )
 )

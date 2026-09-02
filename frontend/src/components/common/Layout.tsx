@@ -1,157 +1,161 @@
-import { Outlet, Link } from 'react-router-dom'
-import { useAuthStore } from '../../stores/authStore'
-import { useCartStore } from '../../stores/cartStore'
-import { 
-  ShoppingCart, 
-  Heart, 
-  User, 
-  Bike,
-  LogOut,
-  Menu
-} from 'lucide-react'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Mountain, ShoppingCart, User, Menu, X, ChevronDown, LayoutDashboard, Settings } from 'lucide-react'
 import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
+import { useCartStore } from '../../stores/cartStore'
+import { useAuthStore } from '../../stores/authStore'
 
 export function Layout() {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [userOpen, setUserOpen] = useState(false)
   const { user, logout } = useAuthStore()
-  const itemCount = useCartStore((state) => state.getItemCount())
-  
+  const totalItems = useCartStore((state) => state.totalItems)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const navLinks = [
+    { to: '/', label: 'Home' },
+    { to: '/configurator', label: 'Build' },
+    { to: '/orders', label: 'Orders' },
+  ]
+
+  const isActive = (to: string) =>
+    to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Top Bar */}
-      <div className="bg-primary/5 border-b">
-        <div className="container mx-auto px-4 py-1.5 flex justify-end text-xs text-muted-foreground">
-          <span>🇳🇵 Nepal's Premium Bike Builder</span>
-        </div>
-      </div>
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          {/* Brand */}
+          <Link to="/" className="flex items-center gap-2 font-display font-bold text-xl tracking-tight shrink-0">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Mountain className="w-4.5 h-4.5 text-white" />
+            </div>
+            <span>HIMAL<span className="text-primary">RIDE</span></span>
+          </Link>
 
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center">
-                <Bike className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                HIMAL-RIDE
-              </span>
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  isActive(link.to) ? 'text-primary bg-primary/8' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            {user?.role === 'admin' && (
+              <Link to="/admin" className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                isActive('/admin') ? 'text-primary bg-primary/8' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}>
+                Admin
+              </Link>
+            )}
+          </nav>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            {/* Cart */}
+            <Link to="/cart" className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <ShoppingCart className="w-5 h-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {totalItems > 9 ? '9+' : totalItems}
+                </span>
+              )}
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1">
-              <Link to="/configurator">
-                <Button variant="ghost" size="sm" className="font-medium">
-                  Build
-                </Button>
-              </Link>
-              
-              {user && (
-                <>
-                  <Link to="/saved-builds">
-                    <Button variant="ghost" size="sm" className="font-medium flex items-center gap-1">
-                      <Heart className="w-4 h-4" />
-                      Saved
-                    </Button>
-                  </Link>
-                  <Link to="/dashboard">
-                    <Button variant="ghost" size="sm" className="font-medium flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      Dashboard
-                    </Button>
-                  </Link>
-                  {user.role === 'admin' && (
-                    <Link to="/admin">
-                      <Button variant="ghost" size="sm" className="font-medium text-primary">
-                        Admin
-                      </Button>
-                    </Link>
-                  )}
-                </>
-              )}
-            </nav>
-
-            <div className="flex items-center gap-2">
-              <Link to="/cart">
-                <Button variant="ghost" size="icon" className="relative">
-                  <ShoppingCart className="w-5 h-5" />
-                  {itemCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-5 h-5 text-xs bg-primary">
-                      {itemCount}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-
-              {!user ? (
-                <Link to="/login">
-                  <Button variant="default" size="sm">
-                    Sign In
-                  </Button>
-                </Link>
-              ) : (
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={logout}
-                  className="flex items-center gap-1 text-muted-foreground hover:text-destructive"
+            {/* Auth */}
+            {user ? (
+              <div className="relative hidden md:block">
+                <button
+                  onClick={() => setUserOpen((v) => !v)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition-colors text-sm font-medium"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden md:inline">Logout</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-grow">
-        <Outlet />
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t bg-muted/30">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h4 className="font-semibold mb-2">HIMAL-RIDE</h4>
-              <p className="text-sm text-muted-foreground">
-                Nepal's premier custom bike builder. Built for the Himalayas.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Quick Links</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li><Link to="/configurator" className="hover:text-foreground">Build a Bike</Link></li>
-                <li><Link to="/explore" className="hover:text-foreground">Explore Bikes</Link></li>
-                <li><Link to="/about" className="hover:text-foreground">About Us</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Support</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li><Link to="/help" className="hover:text-foreground">Help Center</Link></li>
-                <li><Link to="/contact" className="hover:text-foreground">Contact Us</Link></li>
-                <li><Link to="/faq" className="hover:text-foreground">FAQ</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Connect</h4>
-              <p className="text-sm text-muted-foreground">
-                Follow us for the latest builds and updates.
-              </p>
-              <div className="flex gap-2 mt-2">
-                <span className="text-lg">📷</span>
-                <span className="text-lg">📘</span>
-                <span className="text-lg">🐦</span>
+                  <div className="w-6 h-6 bg-primary/15 rounded-full flex items-center justify-center text-primary text-xs font-bold">
+                    {user.full_name?.[0] || 'U'}
+                  </div>
+                  {user.full_name?.split(' ')[0] || 'User'}
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+                {userOpen && (
+                  <div className="absolute right-0 mt-1.5 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-50" onMouseLeave={() => setUserOpen(false)}>
+                    <Link to="/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors" onClick={() => setUserOpen(false)}>
+                      <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                      Dashboard
+                    </Link>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors" onClick={() => setUserOpen(false)}>
+                        <Settings className="w-4 h-4 text-muted-foreground" />
+                        Admin Panel
+                      </Link>
+                    )}
+                    <hr className="my-1 border-border" />
+                    <button
+                      onClick={() => { logout(); setUserOpen(false); navigate('/') }}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors w-full text-left"
+                    >
+                      <User className="w-4 h-4" />
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-          <div className="border-t mt-6 pt-4 text-center text-sm text-muted-foreground">
-            © 2026 HIMAL-RIDE. All rights reserved. 🇳🇵 Made in Nepal.
+            ) : (
+              <div className="hidden md:flex items-center gap-2">
+                <Link to="/login"><Button variant="ghost" size="sm">Sign In</Button></Link>
+                <Link to="/register"><Button size="sm">Get Started</Button></Link>
+              </div>
+            )}
+
+            {/* Mobile hamburger */}
+            <button className="md:hidden p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors" onClick={() => setMenuOpen((v) => !v)}>
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
-      </footer>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-border bg-card px-4 py-4 space-y-1">
+            {navLinks.map((link) => (
+              <Link key={link.to} to={link.to} className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive(link.to) ? 'text-primary bg-primary/8' : 'text-muted-foreground hover:bg-muted'
+              }`} onClick={() => setMenuOpen(false)}>
+                {link.label}
+              </Link>
+            ))}
+            {user?.role === 'admin' && (
+              <Link to="/admin" className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted" onClick={() => setMenuOpen(false)}>
+                Admin
+              </Link>
+            )}
+            <hr className="border-border my-2" />
+            {user ? (
+              <>
+                <Link to="/dashboard" className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted" onClick={() => setMenuOpen(false)}>
+                  Dashboard
+                </Link>
+                <button onClick={() => { logout(); setMenuOpen(false); navigate('/') }} className="block w-full text-left px-3 py-2 rounded-md text-sm font-medium text-destructive hover:bg-muted">
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <div className="flex gap-2 pt-1">
+                <Link to="/login" className="flex-1" onClick={() => setMenuOpen(false)}>
+                  <Button variant="outline" size="sm" className="w-full">Sign In</Button>
+                </Link>
+                <Link to="/register" className="flex-1" onClick={() => setMenuOpen(false)}>
+                  <Button size="sm" className="w-full">Get Started</Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+      </header>
     </div>
   )
 }
