@@ -4,7 +4,7 @@ import { StepIndicator } from '../components/configurator/StepIndicator'
 import { ComponentStep } from '../components/configurator/ComponentStep'
 import { ConfiguratorSummary } from '../components/configurator/ConfiguratorSummary'
 import { Card } from '../components/ui/card'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 const STEPS = [
   'Frame',
@@ -62,7 +62,6 @@ export function ConfiguratorPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
@@ -78,7 +77,6 @@ export function ConfiguratorPage() {
         </button>
       </div>
 
-      {/* Live Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
         <Card className="p-4 text-center lg:col-span-1">
           <p className="text-sm text-muted-foreground">Total Price</p>
@@ -145,7 +143,6 @@ export function ConfiguratorPage() {
         )}
       </Card>
 
-      {/* Progress Bar */}
       <div className="mt-4 flex justify-between text-sm text-muted-foreground">
         <span>Step {currentStep + 1} of 8</span>
         <span>{Math.round((currentStep + 1) / 8 * 100)}% complete</span>
