@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from datetime import datetime, timedelta, timezone
-from typing import List
+from typing import List, Optional
+from uuid import UUID  # ← ADD THIS IMPORT
 from ....core.database import get_db
 from ....core.dependencies import get_current_user
 from ....models.user import User
@@ -13,7 +14,6 @@ import uuid
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
-
 @router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(
     order_data: OrderCreate,
@@ -21,10 +21,18 @@ async def create_order(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new order"""
+    # Convert delivery_region_id to UUID
+    try:
+        region_uuid = UUID(order_data.delivery_region_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid delivery region ID format",
+        )
     
     # Validate delivery region
     stmt = select(DeliveryRegion).where(
-        DeliveryRegion.id == order_data.delivery_region_id,
+        DeliveryRegion.id == region_uuid,
         DeliveryRegion.is_active == True
     )
     result = await db.execute(stmt)
@@ -51,7 +59,7 @@ async def create_order(
         total_amount=order_data.total_amount,
         payment_method=order_data.payment_method,
         payment_status="pending",
-        delivery_region_id=order_data.delivery_region_id,
+        delivery_region_id=region_uuid,  # ← Use UUID here
         delivery_address=order_data.delivery_address.model_dump(),
         estimated_delivery_date=estimated_delivery,
         configuration_snapshot=order_data.configuration_snapshot,
@@ -63,7 +71,6 @@ async def create_order(
     
     return order
 
-
 @router.get("/", response_model=OrderListResponse)
 async def get_orders(
     current_user: User = Depends(get_current_user),
@@ -71,7 +78,13 @@ async def get_orders(
     limit: int = 50,
     offset: int = 0,
 ):
-    """Get user's orders"""
+    """Get user's orders with pagination"""
+    # Get total count
+    count_stmt = select(func.count()).select_from(Order).where(Order.user_id == current_user.id)
+    total_result = await db.execute(count_stmt)
+    total = total_result.scalar()
+    
+    # Get orders
     stmt = select(Order).where(
         Order.user_id == current_user.id
     ).order_by(Order.created_at.desc()).offset(offset).limit(limit)
@@ -80,9 +93,8 @@ async def get_orders(
     
     return {
         "orders": orders,
-        "total": len(orders)
+        "total": total or 0
     }
-
 
 @router.get("/{order_id}")
 async def get_order(
@@ -90,9 +102,17 @@ async def get_order(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a specific order"""
+    """Get a specific order by ID"""
+    try:
+        order_uuid = UUID(order_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid order ID format",
+        )
+    
     stmt = select(Order).where(
-        Order.id == order_id,
+        Order.id == order_uuid,
         Order.user_id == current_user.id
     )
     result = await db.execute(stmt)
@@ -104,7 +124,6 @@ async def get_order(
         )
     return order
 
-
 @router.post("/{order_id}/payment")
 async def simulate_payment(
     order_id: str,
@@ -112,8 +131,16 @@ async def simulate_payment(
     db: AsyncSession = Depends(get_db),
 ):
     """Simulate payment processing"""
+    try:
+        order_uuid = UUID(order_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid order ID format",
+        )
+    
     stmt = select(Order).where(
-        Order.id == order_id,
+        Order.id == order_uuid,
         Order.user_id == current_user.id
     )
     result = await db.execute(stmt)
@@ -142,4 +169,40 @@ async def simulate_payment(
         "order_number": order.order_number,
         "amount": order.total_amount,
         "payment_method": order.payment_method
+    }
+
+@router.get("/{order_id}/status")
+async def get_order_status(
+    order_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get order status updates"""
+    try:
+        order_uuid = UUID(order_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid order ID format",
+        )
+    
+    stmt = select(Order).where(
+        Order.id == order_uuid,
+        Order.user_id == current_user.id
+    )
+    result = await db.execute(stmt)
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+    
+    return {
+        "order_number": order.order_number,
+        "status": order.status,
+        "payment_status": order.payment_status,
+        "estimated_delivery": order.estimated_delivery_date,
+        "created_at": order.created_at,
+        "updated_at": order.updated_at
     }
