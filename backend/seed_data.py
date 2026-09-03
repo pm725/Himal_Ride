@@ -6,7 +6,7 @@ from app.models.role import Role
 from sqlalchemy import select
 import uuid
 
-from backend.app.models.delivery_region import DeliveryRegion
+from app.models.delivery_region import DeliveryRegion
 
 # Component data
 COMPONENTS = [
